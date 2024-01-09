@@ -1,9 +1,11 @@
+
+//MARIAM
 const formulario = document.getElementById("busqueda");
 const inputSearch = document.getElementById("nombre");
 const divResultados = document.querySelector(".resultados");
 const urlCharacters = "https://gateway.marvel.com/v1/public/characters"
 const urlComics = "https://gateway.marvel.com/v1/public/comics"
-const urlEvents = "https://gateway.marvel.com/v1/public/events"
+const urlSeries = "https://gateway.marvel.com/v1/public/series"
 
 //generamos con ts + privatekey + apikey
 const ts = "1"
@@ -36,7 +38,7 @@ async function getAllCharacters() {
     //& para saperar los elementos
     const urlFetch = urlCharacters + "?ts=" + ts + "&apikey=" + apikey + "&hash=" + hash + "&offset=" + offset
     console.log(urlFetch)
-   // Se realiza la solicitud a la URL utilizando la función fetch. 
+    // Se realiza la solicitud a la URL utilizando la función fetch. 
     const response = await fetch(urlFetch);
     const json = await response.json();
     return json;
@@ -56,7 +58,6 @@ async function getAllComics() {
     const response = await fetch(urlFetch);
     const json = await response.json();
     return json;
-    62304
 }
 async function getComicById(id) {
     const urlFetch = urlComics + "/" + id + "?ts=" + ts + "&apikey=" + apikey + "&hash=" + hash + "&offset=" + offset
@@ -83,8 +84,8 @@ async function getCharactersByComicsNameStartsWith(title) {
     const json = await response.json();
     return json;
 }
-async function getCharactersByEventsNameStartsWith(eventsName) {
-    const urlFetch = urlEvents + "?nameStartsWith=" + eventsName + "&ts=" + ts + "&apikey="
+async function getCharactersBySeriesTitleStartsWith(eventsName) {
+    const urlFetch = urlSeries + "?titleStartsWith=" + eventsName + "&ts=" + ts + "&apikey="
         + apikey + "&hash=" + hash + "&offset=" + offset + "&limit=20";
     console.log(urlFetch)
     const response = await fetch(urlFetch);
@@ -105,7 +106,11 @@ async function getWithUrlNoKey(url) {
     const json = await response.json();
     return json;
 }
+
+
+//ARIADNA
 //Distintos eventos de cargan de datos
+//carga de pagina
 window.addEventListener("load", e => {
     getAllCharacters(offset)
         .then(results => {
@@ -113,14 +118,19 @@ window.addEventListener("load", e => {
             console.log(results)
         });
 })
+//envio formulario
 formulario.addEventListener("submit", e => {
     e.preventDefault();
 });
+
+//elemento select (blur)
 filterSelect.addEventListener("blur", e => {
     limpiarPersonajes()
     inputSearch.value = ""
     normalCallCharacters()
 })
+
+
 inputSearch.addEventListener("keyup", e => {
     tipoBusqueda = searchSelected.options[searchSelected.selectedIndex].value
     let selectedOption = filterSelect.options[filterSelect.selectedIndex].value
@@ -147,8 +157,8 @@ inputSearch.addEventListener("blur", e => {
         case "comics":
             callCharactersByComics()
             break;
-        case "eventos":
-            callCharactersByEvents()
+        case "series":
+            callCharactersBySeries()
             break;
     }
 })
@@ -186,6 +196,9 @@ inputPage.addEventListener("blur", e => {
         }
     }
 })
+
+
+//MARCOS
 buttons.addEventListener("click", e => {
     e.preventDefault()
     tipoBusqueda = searchSelected.options[searchSelected.selectedIndex].value
@@ -279,18 +292,18 @@ searchSelected.addEventListener("blur", e => {
     }
 })
 //Funciones para pintar los personajes y los botones
-function selectCharactersFromEvents(response) {
+function selectCharactersFromSeries(response) {
     let contador = 0
     let charactersList = []
-    response.data.results.forEach(event => {
-        if (event.characters.available == 0) {
+    response.data.results.forEach(serie => {
+        if (serie.characters.available == 0) {
         } else {
-            eventName = event.title
-            event.characters.items.forEach(characters => {
+            serieName = serie.title
+            serie.characters.items.forEach(characters => {
                 contador++
                 let url = characters.resourceURI
                 if (!(charactersList.includes(url))) {
-                    let nombreEvento = eventName
+                    let nombreEvento = serieName
                     charactersList.push(url)
                     if (contador <= 20) {
                         getWithUrlNoKey(url)
@@ -356,6 +369,8 @@ function selectCharactersFromComics(response) {
         }
     })
 }
+
+//ARIADNA
 function printCharacters(response, eventName) {
     response.data.results.forEach(personaje => {
         templateCard.querySelector("#personajes").style.display = "none"
@@ -426,7 +441,7 @@ function printComics(response) {
         let listaLiComics = templateCard.querySelectorAll("#personajes> li")
         listaLiComics.forEach(li => {
             li.style.display = "block"
-        }) 
+        })
         for (let i = 0; i < listaLiComics.length; i++) {
             if (numPersonajes > i) {
                 listaLiComics[i].textContent = "- " + comic.characters.items[i].name
@@ -457,14 +472,16 @@ function crearBtn(results, title) {
         default:
             break;
     }
-    btnN = numeropaginas > pagina ? `<button id="prev" class="col-4 btn btn-dark next btn-sm-height rounded ">Siguiente</button>` : ''
-    btnP = pagina > 1 ? `<button id="next" class="col-4 btn btn-dark prev btn-sm-height rounded">Anterior</button>` : ''
+    btnN = numeropaginas > pagina ? `<button id="next" class="col-4 btn btn-dark next btn-sm-height rounded ">Siguiente</button>` : ''
+    btnP = pagina > 1 ? `<button id="prev" class="col-4 btn btn-dark prev btn-sm-height rounded">Anterior</button>` : ''
     inputPage.value = pagina
     labelPage.innerHTML = `de ${numeropaginas}`
     btnLeft.innerHTML = btnP
     btnRight.innerHTML = btnN
 
 }
+
+//MARIAM
 function limpiarPersonajes() {
     divResultados.textContent = ""
 }
@@ -522,7 +539,9 @@ function callCharactersByComics() {
             });
     }
 }
-function callCharactersByEvents() {
+
+//MARCOS
+function callCharactersBySeries() {
     const eventName = inputSearch.value.trim();
     if (eventName == "") {
         getAllCharacters()
@@ -533,10 +552,10 @@ function callCharactersByEvents() {
 
             });
     } else {
-        getCharactersByEventsNameStartsWith(eventName)
+        getCharactersBySeriesTitleStartsWith(eventName)
             .then(results => {
                 limpiarPersonajes()
-                selectCharactersFromEvents(results)
+                selectCharactersFromSeries(results)
                 console.log(results)
 
             });
